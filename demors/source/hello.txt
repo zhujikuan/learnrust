@@ -1,0 +1,4 @@
+Rust, oh Rust, 
+A language so robust. 
+Safe and secure, 
+Our code it will endure.
