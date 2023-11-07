@@ -5,6 +5,11 @@ fn test_unwrap() {
     // 使用 unwrap 方法获取 Some 中的值
     println!("x = {}", x.unwrap());
 
+    match x {
+        Some(i) => println!("i = {}", i),
+        None => println!("None"),
+    }
+
     // 使用 unwrap 方法触发 panic
     // println!("y = {}", y.unwrap());
 

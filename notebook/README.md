@@ -1,4 +1,4 @@
-# learnrust
+# rust
 
 ## 安装
 
@@ -125,25 +125,6 @@ let a = "hello";
     let element = a[index];
     ```
 
-### 语句和表达式
-
-语句指那些执行操作但不返回值的指令，而表达式则是指会进行计算并产生一个值作为结果的指令。
-
-```rust
-let y = 6; // 语句
-fn main() { let y = 6; } // 语句
-// 上述都是语句，它们都不返回值
-
-5+6 // 表达式
-let y = 5+6； // 表达式作为语句的一部分
-let y = 11； // 11 也是一个表达式，它返回11这个值
-```
-
-调用函数是表达式 ！！！
-调用宏是表达式 ！！！
-我们用来创建新作用域的花括号（{}）同样也是表达式 ！！！
-代码块输出的值就是其中最后一个表达式的值 !!!
-
 ### 函数
 
 1. 命名方式：蛇形命名,下划线命名
@@ -154,11 +135,8 @@ let y = 11； // 11 也是一个表达式，它返回11这个值
    2. 一个返回值： -> i32
    3. 多个返回值： -> (i32, i32)
 
-```rust
-fn add(x: i32, y: i32) -> i32 {
-    x + y
-}
-```
+- **语句：执行操作，但不返回值**
+- **表达式：会进行计算并返回一个值作为结果的指令**
 
 ### 注释
 
@@ -185,14 +163,10 @@ fn main(){
     }
 
 
-    //判断中，不允许将数字转换为bool类型
-    //if n {
-    if n!=0 {
-        println!("number is not zero");
-    }
+    //判断中，不允许将数组转换为bool类型
+    //if n { println!("hello");}
 
     // if语句是一个表达式，返回值可以给变量赋值
-    // if语句中，各个块返回类型必须相同。
     let condition = true;
     let number = if condition { 5 } else { 6 };
     println!("The value of number is: {}", number);
@@ -212,16 +186,6 @@ fn main(){
         break 100;
     }
 
-    // break关键字跳出多重循环
-    'outer: loop {
-        println!("Entered the outer loop");
-        'inner: loop {
-            println!("Entered the inner loop");
-            break 'outer;
-        }
-        println!("This point will never be reached");
-    }
-
     // while循环
     let mut n1 = 3；
     while n1 != 0 {
@@ -229,7 +193,7 @@ fn main(){
         n1 = n1 - 1;
     }
 
-    // for循环，迭代器知识不在这讲
+    // for循环，遍历集合
     let a = [10, 20, 30, 40, 50];
     for element in a {
         println!("the value is: {}", element);

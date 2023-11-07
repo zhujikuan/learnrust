@@ -1,0 +1,14 @@
+fn main() {
+    println!("Oh Rust, you are a language so fine,");
+    println!("With your safety and speed, you're simply divine.");
+    println!("Your borrow checker keeps my code in line,");
+    println!("And your macros make metaprogramming a joy of mine.");
+
+    println!("Your syntax is clean, your types are strong,");
+    println!("And your fearless concurrency keeps me from going wrong.");
+    println!("You're a language that's modern, yet built to last,");
+    println!("And your community is friendly, helpful, and vast.");
+
+    println!("Oh Rust, you're a language that's truly sublime,");
+    println!("And I'm grateful to be coding with you all the time.");
+}
