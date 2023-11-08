@@ -1,5 +1,7 @@
 # learnrust
 
+我学习rust过程中的笔记，描述较为精简，省取了推导过程，并不适合他人阅读。
+
 - [learnrust](#learnrust)
   - [安装](#安装)
   - [cargo常用命令](#cargo常用命令)
@@ -24,7 +26,7 @@
     - [枚举](#枚举)
       - [Option](#option)
       - [match](#match)
-    - [模块 包  crate](#模块-包--crate)
+    - [crate package module](#crate-package-module)
       - [包和crate](#包和crate)
       - [作用域和私有性](#作用域和私有性)
       - [路径](#路径)
@@ -568,11 +570,38 @@ fn main() {
 
 ```
 
+### crate package module
+
+1. crate有两种类型：binary crate和library crate
+```shell
+cargo new xxx # 默认是binary crate
+cargo new yyy --lib # 创建library crate
+```
+2. crate中包含package
+   1. 一个crate中最多一个library package（一个包最多只能有一个库lib.rs）
+   2. 一个crate中可以有多个binary package（包中可以有多个包含main函数的binary package，类似于go中命令模板文件的概念）
+3. module，模块，用于组织代码，控制作用域和私有性（我认为跟把代码放进一个文件差不多，一个模块就是一个文件）
+4. 模块树中的路径表示
+   1. 绝对路径：从根部（crate）开始，以crate名(引用外部crate)或者字面值crate(library crate中)开始
+   2. 相对路径：从当前模块开始，self， super，同级模块
+5. pub关键字暴露路径，否则默认私有
+   1. 枚举默认是公共的
+   2. 结构体字段遵循了默认的私有性规则，除非被标记为pub，否则默认是私有的
+6. use将路径导入作用域，引入后就不再需要每次都输入路径了。
+7. use引入两个同名类型就会有冲突，使用as关键字重命名
+8. use引入的路径是私有的，如果想要公开，需要使用pub use
+9. rust怎样拆分mod，文件夹、文件又是怎样组织的？？？？![](https://rust-classes.com/chapter_4_3.html)
+
+
+
+
+
+
+
 
 --------------------
 
 
-### 模块 包  crate
 
 - 包（Packages）： Cargo 的一个功能，它允许你构建、测试和分享 crate。
 - Crates ：一个模块的树形结构，它形成了库或二进制项目。-
