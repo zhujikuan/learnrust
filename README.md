@@ -20,10 +20,10 @@
       - [所有权与函数： 所有权转移](#所有权与函数-所有权转移)
       - [引用和借用](#引用和借用)
       - [切片 slice](#切片-slice)
-    - [结构体structure](#结构体structure)
-    - [方法](#方法)
-    - [枚举 enum](#枚举-enum)
-    - [匹配 match](#匹配-match)
+    - [结构体](#结构体)
+    - [枚举](#枚举)
+      - [Option](#option)
+      - [match](#match)
     - [模块 包  crate](#模块-包--crate)
       - [包和crate](#包和crate)
       - [作用域和私有性](#作用域和私有性)
@@ -380,24 +380,9 @@ let s4 = &s;     // 合法，创建多个不可变引用
     let slice1 = &a[0..3]; // 从0开始到3
     ```
 
+### 结构体
 
-
-
-
-
---------------------
-
-
-
-
-
-
-
-
-
-
-### 结构体structure
-
+1. 定义、实例化
 ```rust
 // 定义结构体
 struct User {
@@ -417,62 +402,175 @@ fn main() {
     };
     // 访问结构体字段
     user1.email = String::from("anotheremail@example.com");
+
+    // 使用结构体更新语法从其他实例创建实例
+    let user2 = User {
+        email: String::from("aaa@bbb.com"),
+        ..user1 // 使用..语法，剩余字段使用user1的值
 }
 ```
 
+2. 元组结构体：没有字段名，只有字段类型
 ```rust
-// 元组结构体
 struct Color(i32, i32, i32);
 struct Point(i32, i32, i32);
-// 单元结构体
-struct AlwaysEqual;
 
-fn main() {
-    let black = Color(0, 0, 0);
-    let origin = Point(0, 0, 0);
-
-    let subject = AlwaysEqual;
-}
+let black = Color(0, 0, 0);
+let black_r = black.0;
+let origin = Point(0, 0, 0);
 ```
 
-结构体数据的所有权： 结构体拥有所有字段的所有权，如果没有所有权，就需要使用生命周期
+3. 单元结构体：没有字段
+```rust
+struct AlwaysEqual;
 
-### 方法
+let subject = AlwaysEqual;
+```
 
-1. &self 实际上是 self: &Self 的缩写。
-2. 在一个 impl 块中，Self 类型是 impl 块的类型的别名
-3. 要修改结构，则使用mut关键字
-
-
+4. 为结构体实现方法
 ```rust
 // 定义结构体
-struct Rectangle { i32, i32 }
-// 定义结构体的方法
+struct Rectangle {
+    width: u32,
+    height: u32,
+}
+struct Rectangle {
+    width: u32,
+    height: u32,
+}
+
 impl Rectangle {
-    fn area(&self) -> u32 { }
-    fn set(&mut self,i32,i32) -> () { }
-    // 这不是方法，是关联函数，不需要self参数
-    fn square(size: u32) -> Rectangle {
-        Rectangle {
+    // 获取所有权
+    fn consume(self) {}
+
+    // 借用所有权，&self 实际上是 self: &Self 的缩写
+    fn inspect(&self) {}
+
+    // 可变借用所有权
+    fn enlarge(&mut self) {
+        self.width *= 2;
+        self.height *= 2;
+    }
+
+    // 关联函数，在一个 impl 块中，Self 类型是 impl 块的类型的别名
+    fn square(size: u32) -> Self {
+        Self {
             width: size,
             height: size,
         }
     }
 }
+```
+
+### 枚举
+
+```rust
+// 枚举定义
+enum IpAddrKind {
+    V4,
+    V6,
+}
+// 枚举实例化
+let four = IpAddrKind::V4;
+let six = IpAddrKind::V6;
+// 枚举绑定类型
+enum IpAddr {
+    V4(String),
+    V6(String),
+}
+let home = IpAddr::V4(String::from("127.0.0.1"));
+let loopback = IpAddr::V6(String::from("::1") );
+
+// 为枚举定义方法
+impl IpAddr {
+    fn call(&self) {
+        // 在这里定义方法体
+    }
+}
+home.call();
+```
+
+#### Option
+    
+```rust
+// Option<T> 枚举
+enum Option<T> {
+    Some(T),
+    None,
+}
+
+// Option<T> 枚举的使用
+fn main() {
+    let some_number = Some(5);
+    let some_string = Some("a string");
+    let absent_number: Option<i32> = None;
+}
+```
+
+#### match
+
+```rust
+// match
+fn main() {
+    let some_u8_value = 0u8;
+    match some_u8_value {
+        1 => println!("one"),
+        3 => println!("three"),
+        5 => println!("five"),
+        7 => println!("seven"),
+        _ => (), // _ 通配符，匹配所有值
+    }
+}
+
+// 绑定值的模式
+enum Coin {
+    Penny,
+    Nickel,
+    Dime,
+    Quarter(UsState),
+}
+
+fn value_in_cents(coin: Coin) -> u8 {
+    match coin {
+        Coin::Penny => {
+            println!("Lucky penny!");
+            1
+        },
+        Coin::Nickel => 5,
+        Coin::Dime => 10,
+        Coin::Quarter(state) => {
+            println!("State quarter from {:?}!", state);
+            25
+        },
+    }
+}
+
+// 匹配Option<T>
+fn plus_one(x: Option<i32>) -> Option<i32> {
+    match x {
+        None => None,
+        Some(i) => Some(i + 1),
+    }
+}
+
+// if let 语法糖，只匹配一个值，不需要穷尽性
+fn main() {
+    let some_u8_value = Some(0u8);
+    match some_u8_value {
+        Some(3) => println!("three"),
+        _ => (),
+    }
+    // 等价于
+    if let Some(3) = some_u8_value {
+        println!("three");
+    }
+}
 
 ```
 
-### 枚举 enum
 
-枚举定义
-特殊枚举Option\<T>，用于空值
-绑定值的枚举
+--------------------
 
-### 匹配 match
-
-1. 匹配必须有穷尽性
-2. 通配符模式和_，可以匹配所有值
-3. if let 语法糖，只匹配一个值，不需要穷尽性
 
 ### 模块 包  crate
 
