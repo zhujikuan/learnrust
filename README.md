@@ -27,10 +27,10 @@
       - [Option](#option)
       - [match](#match)
     - [crate package module](#crate-package-module)
-      - [包和crate](#包和crate)
-      - [作用域和私有性](#作用域和私有性)
-      - [路径](#路径)
-    - [集合](#集合)
+    - [通用集合类型](#通用集合类型)
+      - [动态数组](#动态数组)
+      - [字符串](#字符串)
+      - [哈希映射](#哈希映射)
     - [错误处理](#错误处理)
     - [泛型 trait 生命周期](#泛型-trait-生命周期)
     - [迭代器和闭包](#迭代器和闭包)
@@ -587,14 +587,228 @@ cargo new yyy --lib # 创建library crate
 5. pub关键字暴露路径，否则默认私有
    1. 枚举默认是公共的
    2. 结构体字段遵循了默认的私有性规则，除非被标记为pub，否则默认是私有的
-6. use将路径导入作用域，引入后就不再需要每次都输入路径了。
+6. use将路径导入作用域，引入后就不再需要每次都输入路径了。use 类似于创建一个软连接
 7. use引入两个同名类型就会有冲突，使用as关键字重命名
 8. use引入的路径是私有的，如果想要公开，需要使用pub use
 9. rust怎样拆分mod，文件夹、文件又是怎样组织的？？？？![](https://rust-classes.com/chapter_4_3.html)
 
 
+### 通用集合类型
 
+#### 动态数组
 
+```rust
+fn test_vec() {
+    // 创建一个空的 Vec<i32>
+    let mut vec1: Vec<i32> = Vec::new();
+
+    // 使用宏创建一个包含初始元素的 Vec
+    let mut vec2 = vec![1, 2, 3];
+
+    // 向 Vec 中添加元素
+    vec1.push(1);
+    vec1.push(2);
+    vec1.push(3);
+
+    let mut vec3 = Vec::new();
+    vec3.push(1); // vec3可以不指定泛型类型，因为根据这一句可以推导
+
+    // 通过索引访问 Vec 中的元素
+    let second_element = vec1[1];
+    println!("The second element is {}", second_element);
+
+    // 遍历 Vec 中的元素
+    for element in &vec1 {
+        println!("{}", element);
+    }
+
+    // 为了修改元素内容
+    for element in &mut vec2 {
+        *element += 1;
+    }
+
+    // 修改 Vec 中的元素
+    vec2[0] = 4;
+
+    // 删除 Vec 中的元素
+    vec2.remove(2);
+
+    // 获取 Vec 的长度
+    let vec2_length = vec2.len();
+    println!("The length of vec2 is {}", vec2_length);
+
+    // 检查 Vec 是否为空
+    if vec1.is_empty() {
+        println!("vec1 is empty");
+    } else {
+        println!("vec1 is not empty");
+    }
+
+    // 使用 Vec 的方法进行排序
+    vec2.sort();
+    println!("vec2 after sorting: {:?}", vec2);
+}
+```
+
+#### 字符串
+
+```rust
+fn test_string() {
+    // 创建一个空的 String
+    let mut string1 = String::new();
+
+    // 使用字符串字面量创建一个 String
+    let string2 = String::from("hello");
+
+    // 使用 format! 宏创建一个 String
+    let string3 = format!("{} {}", "hello", "world");
+
+    // 向 String 中添加字符
+    string1.push('h');
+    string1.push('e');
+    string1.push('l');
+    string1.push('l');
+    string1.push('o');
+
+    // 向 String 中添加字符串
+    string1.push_str(", world!");
+
+    // 使用索引访问 String 中的字符
+    //let first_char = string1[0]; // 这样是不行的，因为 Rust 不知道应该返回什么类型
+    let first_char = string1.chars().nth(0).unwrap();
+    println!("The first character is {}", first_char);
+
+    // 使用切片访问 String 中的子串
+    let hello = &string1[0..5];
+    println!("The first five characters are {}", hello);
+
+    // 连接两个 String
+    let string4 = string2 + " world!";
+    println!("string4 = {}", string4);
+
+    // 使用 String 的方法进行查找和替换
+    let replaced = string4.replace("world", "Rust");
+    println!("replaced = {}", replaced);
+
+    // 获取 String 的长度
+    let string1_length = string1.len();
+    println!("The length of string1 is {}", string1_length);
+
+    // 检查 String 是否为空
+    if string1.is_empty() {
+        println!("string1 is empty");
+    } else {
+        println!("string1 is not empty");
+    }
+}
+```
+
+#### 哈希映射
+
+1. 一旦键值对被插入，其所有权就会转移给哈希映射
+2. 哈希映射中的所有键都必须是相同类型，值也必须都是相同类型
+```rust
+fn test_hashmap() {
+    use std::collections::HashMap;
+    // 创建一个空的 HashMap
+    let mut map1: HashMap<i32, &str> = HashMap::new();
+
+    // 向 HashMap 中添加元素
+    map1.insert(1, "one");
+    map1.insert(2, "two");
+    map1.insert(3, "three");
+
+    // or_insert
+    map1.entry(1).or_insert("ONE");
+
+    // 通过键访问 HashMap 中的元素
+    let value = map1.get(&2);
+    println!("The value of key 2 is {:?}", value);
+
+    // 遍历 HashMap 中的元素
+    for (key, value) in &map1 {
+        println!("{}: {}", key, value);
+    }
+
+    // 修改 HashMap 中的元素
+    map1.insert(1, "ONE");
+
+    // 删除 HashMap 中的元素
+    map1.remove(&2);
+
+    // 获取 HashMap 的长度
+    let map1_length = map1.len();
+    println!("The length of map1 is {}", map1_length);
+
+    // 检查 HashMap 是否为空
+    if map1.is_empty() {
+        println!("map1 is empty");
+    } else {
+        println!("map1 is not empty");
+    }
+}
+```
+
+### 错误处理
+
+1. 不可恢复错误与panic
+```rust
+fn get_by_index(arr: &Vec<i32>, index: usize)->i32{
+    if arr.len() == 0 || arr.len() <= index {
+        panic!("Array is empty");
+    }
+    arr[index]
+}
+
+fn main() {
+    let arr = vec![1,2,3,4,5];
+    let result = get_by_index(&arr, 100);
+    println!("The value at index {} is {}", 100, result);
+}
+```
+
+2. 可恢复错误与Result
+```rust
+/* 注意：Result<T, E> 是一个枚举类型！！！！,不过如此
+enum Result<T, E> {
+    Ok(T),
+    Err(E),
+}
+*/
+
+use std::fs::File;
+fn main() {
+    let f = File::open("hello.txt");
+    // match 处理 Result
+    let f = match f {
+        Ok(file) => file,
+        Err(error) => {
+            panic!("There was a problem opening the file: {:?}", error)
+        }
+    };
+
+    // unwrap: 返回的不是 Ok 就是 panic!，ok() 就返回 Ok 中的值
+    let f = File::open("hello.txt").unwrap();
+
+    // expect: 和 unwrap 一样，但是可以自定义 panic! 的错误信息
+    let f = File::open("hello.txt").expect("Failed to open hello.txt");
+
+    use std::fs::File;
+    use std::io;
+    use std::io::Read;
+    
+    // 传播错误
+    // ? 语法糖，当返回为错误时，自动return Err(error)
+    fn read_username_from_file() -> Result<String, io::Error> {
+        let mut f = File::open("hello.txt")?;
+        let mut s = String::new();
+        f.read_to_string(&mut s)?;
+        Ok(s)
+    }
+}
+```
+
+### 泛型 trait 生命周期
 
 
 
@@ -602,49 +816,6 @@ cargo new yyy --lib # 创建library crate
 --------------------
 
 
-
-- 包（Packages）： Cargo 的一个功能，它允许你构建、测试和分享 crate。
-- Crates ：一个模块的树形结构，它形成了库或二进制项目。-
-- 模块（Modules）和 use： 允许你控制作用域和路径的私有性。
-- 路径（path）：一个命名例如结构体、函数或模块等项的方式
-
-#### 包和crate
-
-1. 一个包中至多 只能 包含一个库 crate(library crate)；
-2. 包中可以包含任意多个二进制 crate(binary crate)；
-3. 包中至少包含一个 crate，无论是库的还是二进制的。
-
-src/main.rs
-src/lib.rs
-src/bin
-
-#### 作用域和私有性
-
-1. use关键字引入其他crate的pub属性的关键字，同时可以用as重命名
-2. rust中默认都是私有的，
-3. 通过模块mod，组织一类数据，模块可以嵌套
-4. 模块数，树根就是src/lib.rs，然后层层嵌套
-
-#### 路径
-
-1. 使用路径定位模块中的项，就像文件系统的路径一样。
-2. 相对路径：从当前模块开始，self， super，同级模块
-3. 绝对路径：从根部（crate）开始，
-
-use 类似于创建一个软连接
-
-### 集合
-
-1. Vector
-2. String
-3. HashMap
-
-### 错误处理
-
-1. 不可恢复错误：panic!
-2. 可恢复错误：Result<T, E>
-
-### 泛型 trait 生命周期
 
 ### 迭代器和闭包
 
