@@ -33,6 +33,13 @@
       - [哈希映射](#哈希映射)
     - [错误处理](#错误处理)
     - [泛型 trait 生命周期](#泛型-trait-生命周期)
+      - [泛型 减少重复代码](#泛型-减少重复代码)
+      - [trait 定义共享行为](#trait-定义共享行为)
+      - [生命周期](#生命周期)
+    - [自动化测试](#自动化测试)
+      - [单元测试](#单元测试)
+      - [cargo test常用命令](#cargo-test常用命令)
+      - [测试的组织结构](#测试的组织结构)
     - [迭代器和闭包](#迭代器和闭包)
     - [智能指针](#智能指针)
       - [Box\<T\>](#boxt)
@@ -810,7 +817,198 @@ fn main() {
 
 ### 泛型 trait 生命周期
 
+#### 泛型 减少重复代码
+```rust
+// 在函数中定义
+fn largest<T>(list: &[T]) -> T {
+    let mut largest = list[0];
+    for &item in list.iter() {
+        if item > largest {
+            largest = item;
+        }
+    }
+    largest
+}
+// 在结构体中定义
+struct Point<T, U> {
+    x: T,
+    y: U,
+}
+fn main() {
+    let wont_work = Point { x: 5, y: 4.0 };
+}
+// 在枚举中定义
+enum Option<T> {
+    Some(T),
+    None,
+}
+// 在方法中定义
+impl<T,U> Point<T,U> {
+    fn x(&self) -> &T {
+        &self.x
+    }
+    fn y(&self) -> &U {
+        &self.y
+    }
+}
+```
 
+泛型代码的**性能问题**：rust通过在编译时进行泛型代码的**单态化**来保证效率
+
+#### trait 定义共享行为
+
+trait与其他语言中常被称为接口（interface）的功能类似，但也不尽相同。
+
+```rust
+// 定义trait
+pub trait Summary {
+    fn summarize(&self) -> String;
+}
+
+// 实现trait
+pub struct NewsArticle {
+    pub headline: String,
+    pub location: String,
+    pub author: String,
+    pub content: String,
+}
+impl Summary for NewsArticle {
+    fn summarize(&self) -> String {
+        format!("{}, by {} ({})", self.headline, self.author, self.location)
+    }
+}
+
+// 默认实现， trait中的方法可以有默认实现，不想用也可以自己实现（重载）
+pub trait Summary {
+    fn summarize(&self) -> String {
+        String::from("(Read more...)")
+    }
+}
+
+// trait作为参数
+pub fn notify(item: impl Summary) {
+    println!("Breaking news! {}", item.summarize());
+}
+
+// 多个trait作为参数 加号
+pub fn notify(item: impl Summary + Display) {}
+
+// trait约束
+pub fn notify<T: Summary>(item1: T, item2: T) {
+    println!("Breaking news! {}", item1.summarize());
+    println!("Breaking news! {}", item2.summarize());
+}
+
+// 多个trait约束
+pub fn notify<T: Summary + Display>(item: T) {}
+
+// where语法
+fn some_function<T: Display + Clone, U: Clone + Debug>(t: T, u: U) -> i32 {}
+// 等价于
+fn some_function<T, U>(t: T, u: U) -> i32
+    where T: Display + Clone,
+          U: Clone + Debug
+{}
+
+// trait作为返回值
+fn returns_summarizable() -> impl Summary {
+    Tweet {
+        username: String::from("horse_ebooks"),
+        content: String::from("of course, as you probably already know, people"),
+        reply: false,
+        retweet: false,
+    }
+}
+```
+
+#### 生命周期
+
+```rust
+暂时跳过
+```
+
+### 自动化测试
+
+#### 单元测试
+```rust
+/*
+1. 测试是一个函数
+2. 使用#[test]标记,#[test]标记的函数只能返回unit类型
+3. #[cfg(test)]标记，只有在测试时才编译,可以帮助缩减编译工作量和文件大小
+*/
+#[test]
+fn it_works() {
+    assert_eq!(2 + 2, 4);
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn it_works() {
+        assert_eq!(2 + 2, 4);
+    }
+}
+
+// 用于测试的断言宏
+assert!(true);
+assert_eq!(1, 1);
+assert_ne!(1, 0);
+// 自定义错误信息
+assert!(1 == 2, "1 does not equal 2");
+
+// 测试panic的情况
+#[test]
+#[should_panic]
+fn greater_than_100() {
+    Guess::new(200);
+}
+
+// 测试panic的情况，并且检查panic的信息
+#[test]
+#[should_panic(expected = "Guess value must be less than or equal to 100")]
+fn greater_than_100() {
+    Guess::new(200);
+}
+
+// 测试Result
+#[test]
+fn it_works() -> Result<(), String> {
+    if 2 + 2 == 4 {
+        Ok(())
+    } else {
+        Err(String::from("two plus two does not equal four"))
+    }
+}
+
+// 忽略某个测试
+#[ignore]
+#[test]
+fn it_works() {
+    assert_eq!(2 + 2, 4);
+}
+
+```
+
+#### cargo test常用命令
+    
+```bash
+# 运行所有测试
+cargo test
+# 运行某个测试
+cargo test test_name
+# 运行某个测试中的某个子测试
+cargo test test_name::sub_test_name
+# 运行所有测试，包括带有ignore标记的测试
+cargo test -- --ignored
+# 运行所有测试，包括带有ignore标记的测试，并且显示输出
+cargo test -- --ignored --nocapture
+
+```
+
+#### 测试的组织结构
+
+1. 单元测试：之前的例子都是
+2. 集成测试：在tests目录下创建测试文件，每个文件都是一个独立的crate，可以使用外部crate，可以测试私有函数，可以测试多个模块之间的交互
 
 
 --------------------
