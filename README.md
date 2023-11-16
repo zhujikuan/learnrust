@@ -40,9 +40,16 @@
       - [单元测试](#单元测试)
       - [cargo test常用命令](#cargo-test常用命令)
       - [测试的组织结构](#测试的组织结构)
-    - [迭代器和闭包](#迭代器和闭包)
+    - [闭包(没学会)](#闭包没学会)
+    - [迭代器](#迭代器)
     - [智能指针](#智能指针)
-      - [Box\<T\>](#boxt)
+      - [引用](#引用)
+      - [Box](#box)
+      - [Rc](#rc)
+      - [RefCell](#refcell)
+    - [无畏并发](#无畏并发)
+    - [面向对象编程](#面向对象编程)
+    - [模式匹配](#模式匹配)
 
 
 
@@ -1011,23 +1018,119 @@ cargo test -- --ignored --nocapture
 2. 集成测试：在tests目录下创建测试文件，每个文件都是一个独立的crate，可以使用外部crate，可以测试私有函数，可以测试多个模块之间的交互
 
 
---------------------
+### 闭包(没学会)
 
+```rust
+// 闭包用起来跟函数没觉得有什么区别，（仅仅是从使用上来讲，从语法和编译器上来讲肯定有很大区别）
 
+// 闭包定义 Fn、FnMut、FnOnce
+// let print: impl Fn() = || println!("`color`: {}", color);
+let print = || println!("`color`: {}", color);
+// let mut inc: impl FnMut() = || {
+let mut inc = || {
+    count += 1;
+    println!("`count`: {}", count);
+};
+// let consume: impl FnOnce() = || {
+let consume = || {
+    println!("`movable`: {:?}", movable);
+    mem::drop(movable);
+};
 
-### 迭代器和闭包
+// 捕获变量 &、&mut、move
+// learnrust/demors/examples/demo_closure.rs
 
-1. 闭包： Rust 的 闭包（closures）是可以保存进变量或作为参数传递给其他函数的匿名函数。可以在一个地方创建闭包，然后在不同的上下文中执行闭包运算。不同于函数，闭包允许捕获调用者作用域中的值。
+// 闭包作为函数参数
+// Fn：表示捕获方式为通过引用（&T）的闭包
+// FnMut：表示捕获方式为通过可变引用（&mut T）的闭包
+// FnOnce：表示捕获方式为通过值（T）的闭包
 
+```
+
+### 迭代器
+1. 迭代器基础用法
+   1. for e in arr.iter() {}
+   2. for e in &mut arr.iter_mut() {}
+   3. next 用于惰性求下一个值
+   4. map 对迭代器的每个元素进行遍历，并返回新的迭代器
+   5. collect 将迭代器转换为集合
+   6. filter 对迭代器的每个元素进行过滤，并返回新的迭代器
+2. 自定义迭代器
+   1. 实现Iterator trait中的next函数
+    
 ### 智能指针
 
-#### Box\<T>
+#### 引用
+1. Deref trait，可以当作引用使用，使用*解引用
+2. DerefMut trait，可以当作可变引用使用，使用*解引用
+3. Drop trait，当引用离开作用域时，会自动调用drop函数，释放内存
 
-1. box 允许你将一个值放在堆上而不是栈上。留在栈上的则是指向堆数据的指针。
-2. 应用场景示例：
-    - 当有一个在编译时未知大小的类型，而又想要在需要确切大小的上下文中使用这个类型值的时候
-    - 当有大量数据并希望在确保数据不被拷贝的情况下转移所有权的时候
-    - 当希望拥有一个值并只关心它的类型是否实现了特定 trait 而不是其具体类型的时候
-3. deref trait，可以当作引用,使用*
-4. drop trait，当box离开作用域时，会自动调用drop函数，释放堆上的内存
+#### Box<T>
+1. T存在堆上，Box<T>存在栈上，指向堆上的T类型数据，
+2. Box<T>实现了Deref trait
+3. Box<T>实现了DerefMut trait
+ 
+#### Rc<T>
+1. 允许多重所有权的引用计数类型。
+2. 用于共享数据，但是不能修改，因为没有实现DerefMut trait
 
+
+#### RefCell<T>
+1. Ref<T>和RefMut<T>，可以通过RefCell<T>访问，是一种可以在运行时而不是编译时执行借用规则的类型。
+
+### 无畏并发
+
+```rust
+// 1. 创建线程
+let handle = std::thread::spawn(|| {
+    println!("Hello, world!");
+    std::thread::sleep(std::time::Duration::from_secs(1));
+});
+// 2. 等待线程返回 （join有"连接"的意思）
+handle.join().unwrap();
+// 3. move
+let v = vec![1, 2, 3];
+let handle = std::thread::spawn(move || {
+    println!("Here's a vector: {:?}", v);
+});
+// 4. channel
+let (tx, rx) = std::sync::mpsc::channel();
+tx.send(5).unwrap();
+let received = rx.recv().unwrap();
+// 创建多个生产者
+let tx1 = std::sync::mpsc::Sender::clone(&tx); 
+
+// 5. mutex 互斥锁
+let m = std::sync::Mutex::new(5);
+{
+    let mut num = m.lock().unwrap();
+    *num = 6;
+}
+println!("m = {:?}", m);
+// 6. 多线程共享互斥锁 Arc<T>
+let counter = std::sync::Arc::new(std::sync::Mutex::new(0));
+let mut handles = vec![];
+for _ in 0..10 {
+    let counter = std::sync::Arc::clone(&counter);
+    let handle = std::thread::spawn(move || {
+        let mut num = counter.lock().unwrap();
+        *num += 1;
+    });
+    handles.push(handle);
+}
+
+// 7. 只有实现了send和sync trait的类型才能跨线程传递所有权
+```
+
+### 面向对象编程
+
+1. 封装：通过pub关键字，限制结构体字段或函数的权限
+2. 继承：没有继承，只有trait组合，类似于go的interface组合
+
+
+### 模式匹配
+
+```rust
+
+
+```
